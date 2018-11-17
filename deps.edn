@@ -1,0 +1,14 @@
+{:paths ["src" "resources"]
+ :deps {
+        org.clojure/clojure {:mvn/version "1.9.0"}
+        com.datomic/client-cloud {:mvn/version "0.8.63"}
+        com.datomic/datomic-pro {:mvn/version  "0.9.5554"
+                                 :exclusions [joda-time]}}
+ :aliases
+ {:dev {:extra-deps {
+                     ;; --- To send Datoms via HTTP ---
+                     http-kit {:mvn/version "2.2.0"}
+                     ;; --- For NREPL
+                     cider/cider-nrepl {:mvn/version "0.17.0"}
+                     org.clojure/tools.nrepl {:mvn/version "0.2.12"}}}}}
+

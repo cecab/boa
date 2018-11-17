@@ -1,0 +1,7 @@
+{:on-premise
+ {:uri "datomic:dev://localhost:4334/complejo"}
+ :api-gateways
+ {:init-db
+  "https://6a95641s66.execute-api.us-east-2.amazonaws.com/dev/datomic"
+  :apply-tx
+  "https://3lynibgz02.execute-api.us-east-2.amazonaws.com/dev/datomic"}}
