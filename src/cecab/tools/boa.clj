@@ -1,7 +1,6 @@
 (ns cecab.tools.boa
   (:require [org.httpkit.client :as http]
-            [datomic.api :as da]
-            [datomic.client.api :as d]
+            [datomic.api :as d]
             [cecab.tools.common :as common]))
 
 (defn post-request
@@ -24,21 +23,21 @@
     [db]
     (let [epoc  #inst "1970-01-01T00:00:00.000-00:00"]
       (sort
-       (da/q '[:find [?tx ...]
+       (d/q '[:find [?tx ...]
                :in $ ?ref
                :where
                [?e :db/valueType ?v ?tx ?added]
                [?e :db/ident ?a ?tx ?added]
                [?tx :db/txInstant ?when]
                [(> ?when ?ref)]]
-             (da/history db)
+             (d/history db)
              epoc))))
 
 (defn get-first-custom-tx-schema
     "Find the first transaction for the schema in db"
     [db]
     (:db/txInstant
-     (da/pull db '[:db/txInstant]
+     (d/pull db '[:db/txInstant]
               (-> db get-txs-for-schema first))))
 
 
@@ -46,11 +45,11 @@
     "Get a list of all attributes in pro-db taken from the history 
      of the database"
     [pro-db]
-    (da/q '[:find [?v ...]
+    (d/q '[:find [?v ...]
             :in $ [?tx ...]
             :where
             [?e :db/ident ?v ?tx ?added]]
-          (da/history pro-db)
+          (d/history pro-db)
           (get-txs-for-schema pro-db)))
 
 (defn get-all-tx-data
@@ -58,13 +57,13 @@
      that created attributes in the schema of pro-db"
     [pro-db]
     (sort
-     (da/q '[:find [?tx ...]
+     (d/q '[:find [?tx ...]
              :in $ ?ref  [?a ...]
              :where
              [?e ?a ?v ?tx ?added]
              [?tx :db/txInstant ?when]
              [(>= ?when ?ref)]]
-           (da/history pro-db)
+           (d/history pro-db)
            (get-first-custom-tx-schema pro-db)
            (get-schema-attribs pro-db))))
 
@@ -76,7 +75,7 @@
    (fn [acc [x-eid x-attr eid added?]]
      (if (int? eid)
        (if-let [i (:db/ident
-                   (da/pull pro-db [:db/ident] eid))]
+                   (d/pull pro-db [:db/ident] eid))]
          (assoc acc eid i)
          acc)
        acc))
@@ -120,7 +119,7 @@
         create-db? (post-request url-apigateway-init-db post-value)
         pro-uri (-> config (get-in [:on-premise :uri]))
         pro-db 
-        (da/db (da/connect pro-uri))
+        (d/db (d/connect pro-uri))
         tx-attribs (get-txs-for-schema pro-db)
         tx-data (get-all-tx-data pro-db)
         all-txs (sort  (concat tx-attribs tx-data))
@@ -135,7 +134,27 @@
               {:tx-datoms the-datoms
                :map-datatypes (get-map-datatypes pro-db the-datoms)
                :db-name db-name}]
-          (post-request url-apigateway-apply-tx mig-1)))
+          (post-request url-apigateway-apply-tx mig-data)))
       all-txs))))
 
+(comment
+  (def ensayo-uri "datomic:dev://localhost:4334/ensayo")
+  (def db-ensayo (d/db))
+  ;; -- Mejor formas de obtener la lista de txs
+  ;; https://gist.github.com/favila/62276cdb479060b782158e808e1113aa
+  (def doble (map
+                  (fn [x]
+                    (println x)
+                    (* 2 x))))
+  (def filtro (filter #(> % 30)))
+  (def xtr-all
+    (comp filtro doble))
+  
+  (def lazy-seq (sequence
+                 xtr-all
+                 (range 0 100)))
+  
+  (take 3 lazy-seq)
+  (62 64 66)
 
+  )
